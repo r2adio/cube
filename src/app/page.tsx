@@ -1,16 +1,22 @@
-"use client";
+import { getQueryClient, trpc } from "@/trpc/server";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { Client } from "./client";
+import { Suspense } from "react";
 
-import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+const Page = async () => {
+  // const data = await caller.createAI({ text: "my_server" });
+  const queryClient = getQueryClient();
+  void queryClient.prefetchQuery(
+    trpc.createAI.queryOptions({ text: "my_server prefetch" }),
+  );
 
-const Page = () => {
-  const trpc = useTRPC();
-  // trpc.hello.queryOptions({ text: "Hello!" }); //check src/trpc/routers/_app.ts
-  // const { data } = useQuery(fetch("/api/create-ai", { body: JSON.stringify })); //earlier meathod to get data from api
-  // simple fetching data using a client component, this is a data access layer
-  const { data } = useQuery(trpc.createAI.queryOptions({ text: "Antonio" }));
-
-  return <div>{JSON.stringify(data)}</div>;
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <Suspense fallback={<p>loading...</p>}>
+        <Client />
+      </Suspense>
+    </HydrationBoundary>
+  );
 };
 
 export default Page;
