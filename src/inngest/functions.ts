@@ -4,6 +4,7 @@ import {
   createAgent,
   createTool,
   createNetwork,
+  Tool,
 } from "@inngest/agent-kit";
 
 //use createFunction to define
@@ -11,10 +12,17 @@ import { inngest } from "./client";
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import z from "zod";
 import { PROMPT } from "@/prompt";
+import { prisma } from "@/lib/db";
 
-export const helloWorld = inngest.createFunction(
-  { id: "hello-world" },
-  { event: "test/hello.world" },
+// providing types for entire network state
+interface AgentState {
+  summary: string;
+  files: { [path: string]: string };
+}
+
+export const codeAgentFunc = inngest.createFunction(
+  { id: "codeAgent" },
+  { event: "code-agent/run" },
   async ({ event, step }) => {
     const sandboxId = await step.run("get-sandbox-id", async () => {
       const sandbox = await Sandbox.create("cube-r2adio");
@@ -22,8 +30,8 @@ export const helloWorld = inngest.createFunction(
     });
 
     // creating a coding agent
-    const codeAgent = createAgent({
-      name: "codeAgent",
+    const codeAgent = createAgent<AgentState>({
+      name: "code-agent",
       description: "An expert coding agent",
       system: PROMPT,
       model: gemini({
@@ -73,7 +81,10 @@ export const helloWorld = inngest.createFunction(
               }),
             ),
           }),
-          handler: async ({ files }, { step, network }) => {
+          handler: async (
+            { files },
+            { step, network }: Tool.Options<AgentState>,
+          ) => {
             const newFiles = await step?.run(
               "createOrUpdateFiles",
               async () => {
@@ -138,7 +149,7 @@ export const helloWorld = inngest.createFunction(
       },
     });
 
-    const network = createNetwork({
+    const network = createNetwork<AgentState>({
       name: "coding-agent-network",
       agents: [codeAgent],
       maxIter: 15, // max iteration: no. of loops/cycles an agent can do.
@@ -158,11 +169,44 @@ export const helloWorld = inngest.createFunction(
     // );
     const result = await network.run(event.data.value);
 
+    // flagged as error if summary not found or Object.keys is of length 0
+    const isError =
+      !result.state.data.summary ||
+      Object.keys(result.state.data.files || {}).length === 0;
+
     // sandbox url
     const sandboxUrl = await step.run("get-sandbox-url", async () => {
       const sandbox = await getSandbox(sandboxId);
       const host = sandbox.getHost(3000); // creates a host under port 3000
       return `https://${host}`;
+    });
+
+    // saving the sandboxUrl to db
+    await step.run("save-result", async () => {
+      if (isError) {
+        return await prisma.message.create({
+          data: {
+            content: "Something went wrong. Please try again.",
+            role: "ASSISTANT",
+            type: "ERROR",
+          },
+        });
+      }
+
+      return await prisma.message.create({
+        data: {
+          content: result.state.data.summary,
+          role: "ASSISTANT",
+          type: "RESULT",
+          fragment: {
+            create: {
+              sandboxUrl: sandboxUrl,
+              title: "Fragment",
+              files: result.state.data.files,
+            },
+          },
+        },
+      });
     });
 
     return {
