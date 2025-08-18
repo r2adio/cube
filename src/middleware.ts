@@ -7,6 +7,7 @@ const isPublicRoute = createRouteMatcher([
   "/api(.*)",
   // "/api/inngest(.*)",
   // "/api/trpc(.*)",
+  "/pricing(.*)",
 ]);
 
 // checks if current req isn't a public route, then redirects to the protect page
