@@ -4,7 +4,9 @@ import {
   createAgent,
   createTool,
   createNetwork,
-  Tool,
+  type Tool,
+  type Message,
+  createState,
 } from "@inngest/agent-kit";
 
 //use createFunction to define
@@ -28,6 +30,30 @@ export const codeAgentFunc = inngest.createFunction(
       const sandbox = await Sandbox.create("cube-r2adio");
       return sandbox.sandboxId;
     });
+
+    const prevMessages = await step.run("get-prev-messages", async () => {
+      const formattedMessages: Message[] = [];
+
+      const messages = await prisma.message.findMany({
+        where: { projectId: event.data.projectId },
+        orderBy: { createdAt: "desc" },
+      });
+
+      for (const message of messages) {
+        formattedMessages.push({
+          type: "text",
+          role: message.role === "ASSISTANT" ? "assistant" : "user",
+          content: message.content,
+        });
+      }
+
+      return formattedMessages;
+    });
+
+    const state = createState<AgentState>(
+      { summary: "", files: {} },
+      { messages: prevMessages },
+    );
 
     // creating a coding agent
     const codeAgent = createAgent<AgentState>({
@@ -153,6 +179,7 @@ export const codeAgentFunc = inngest.createFunction(
       name: "coding-agent-network",
       agents: [codeAgent],
       maxIter: 15, // max iteration: no. of loops/cycles an agent can do.
+      defaultState: state,
       router: async ({ network }) => {
         const summary = network.state.data.summary;
 
@@ -167,7 +194,7 @@ export const codeAgentFunc = inngest.createFunction(
     // const { output } = await codeAgent.run(
     //   `Write the following snippet: ${event.data.value}`,
     // );
-    const result = await network.run(event.data.value);
+    const result = await network.run(event.data.value, { state });
 
     // flagged as error if summary not found or Object.keys is of length 0
     const isError =
