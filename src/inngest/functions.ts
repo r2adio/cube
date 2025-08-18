@@ -13,7 +13,7 @@ import {
 import { inngest } from "./client";
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
 import z from "zod";
-import { PROMPT } from "@/prompt";
+import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
 import { prisma } from "@/lib/db";
 
 // providing types for entire network state
@@ -196,6 +196,54 @@ export const codeAgentFunc = inngest.createFunction(
     // );
     const result = await network.run(event.data.value, { state });
 
+    const fragmentTitleGenerator = createAgent({
+      name: "fragment-title-generator",
+      description: "A fragment title generator",
+      system: FRAGMENT_TITLE_PROMPT,
+      model: gemini({
+        model: "gemini-1.5-flash",
+      }),
+    });
+
+    const responseGenerator = createAgent({
+      name: "response-generator",
+      description: "A response generator",
+      system: RESPONSE_PROMPT,
+      model: gemini({
+        model: "gemini-1.5-flash",
+      }),
+    });
+
+    const { output: fragmentTitleOutput } = await fragmentTitleGenerator.run(
+      result.state.data.summary,
+    );
+    const { output: responseOutput } = await responseGenerator.run(
+      result.state.data.summary,
+    );
+
+    const generateFragmentTitle = () => {
+      const output = fragmentTitleOutput[0];
+      if (output.type !== "text") {
+        return "Fragment";
+      }
+      if (Array.isArray(output.content)) {
+        return output.content.map((txt) => txt).join("");
+      } else {
+        return output.content;
+      }
+    };
+    const generateResponse = () => {
+      const output = responseOutput[0];
+      if (output.type !== "text") {
+        return "Here you go";
+      }
+      if (Array.isArray(output.content)) {
+        return output.content.map((txt) => txt).join("");
+      } else {
+        return output.content;
+      }
+    };
+
     // flagged as error if summary not found or Object.keys is of length 0
     const isError =
       !result.state.data.summary ||
@@ -224,13 +272,13 @@ export const codeAgentFunc = inngest.createFunction(
       return await prisma.message.create({
         data: {
           projectId: event.data.projectId, // anytime message is created, projectId is attached
-          content: result.state.data.summary,
+          content: generateResponse(),
           role: "ASSISTANT",
           type: "RESULT",
           fragment: {
             create: {
               sandboxUrl: sandboxUrl,
-              title: "Fragment",
+              title: generateFragmentTitle(),
               files: result.state.data.files,
             },
           },
