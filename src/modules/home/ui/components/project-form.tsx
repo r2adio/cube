@@ -38,6 +38,7 @@ export const ProjectForm = () => {
     trpc.projects.create.mutationOptions({
       onSuccess: (data) => {
         queryClient.invalidateQueries(trpc.projects.getMany.queryOptions());
+        queryClient.invalidateQueries(trpc.usage.status.queryOptions());
         router.push(`/projects/${data.id}`);
         // TODO: Invalidate usage status
       },
@@ -47,6 +48,11 @@ export const ProjectForm = () => {
         // OPTIM: redirect to pricing page if specific error
         if (error.data?.code === "UNAUTHORIZED") {
           clerk.openSignIn();
+        }
+
+        // redirect to pricing page, when using dashboard w/o credits
+        if (error.data?.code === "TOO_MANY_REQUESTS") {
+          router.push("/pricing");
         }
       },
     }),
