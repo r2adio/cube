@@ -11,7 +11,11 @@ import {
 
 //use createFunction to define
 import { inngest } from "./client";
-import { getSandbox, lastAssistantTextMessageContent } from "./utils";
+import {
+  getSandbox,
+  lastAssistantTextMessageContent,
+  parseAgentOutput,
+} from "./utils";
 import z from "zod";
 import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
 import { prisma } from "@/lib/db";
@@ -221,29 +225,6 @@ export const codeAgentFunc = inngest.createFunction(
       result.state.data.summary,
     );
 
-    const generateFragmentTitle = () => {
-      const output = fragmentTitleOutput[0];
-      if (output.type !== "text") {
-        return "Fragment";
-      }
-      if (Array.isArray(output.content)) {
-        return output.content.map((txt) => txt).join("");
-      } else {
-        return output.content;
-      }
-    };
-    const generateResponse = () => {
-      const output = responseOutput[0];
-      if (output.type !== "text") {
-        return "Here you go";
-      }
-      if (Array.isArray(output.content)) {
-        return output.content.map((txt) => txt).join("");
-      } else {
-        return output.content;
-      }
-    };
-
     // flagged as error if summary not found or Object.keys is of length 0
     const isError =
       !result.state.data.summary ||
@@ -272,13 +253,13 @@ export const codeAgentFunc = inngest.createFunction(
       return await prisma.message.create({
         data: {
           projectId: event.data.projectId, // anytime message is created, projectId is attached
-          content: generateResponse(),
+          content: parseAgentOutput(responseOutput),
           role: "ASSISTANT",
           type: "RESULT",
           fragment: {
             create: {
               sandboxUrl: sandboxUrl,
-              title: generateFragmentTitle(),
+              title: parseAgentOutput(fragmentTitleOutput),
               files: result.state.data.files,
             },
           },
