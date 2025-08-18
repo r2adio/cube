@@ -19,6 +19,7 @@ import {
 import z from "zod";
 import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "@/prompt";
 import { prisma } from "@/lib/db";
+import { SANDBOX_TIMEOUT } from "./types";
 
 // providing types for entire network state
 interface AgentState {
@@ -32,6 +33,7 @@ export const codeAgentFunc = inngest.createFunction(
   async ({ event, step }) => {
     const sandboxId = await step.run("get-sandbox-id", async () => {
       const sandbox = await Sandbox.create("cube-r2adio");
+      await sandbox.setTimeout(SANDBOX_TIMEOUT); // increases the default setTimeout from 5 to 20 min.
       return sandbox.sandboxId;
     });
 
@@ -41,6 +43,7 @@ export const codeAgentFunc = inngest.createFunction(
       const messages = await prisma.message.findMany({
         where: { projectId: event.data.projectId },
         orderBy: { createdAt: "desc" },
+        take: 5, // limiting the message history, { long message history -> more tokens }
       });
 
       for (const message of messages) {
@@ -51,7 +54,7 @@ export const codeAgentFunc = inngest.createFunction(
         });
       }
 
-      return formattedMessages;
+      return formattedMessages.reverse();
     });
 
     const state = createState<AgentState>(
