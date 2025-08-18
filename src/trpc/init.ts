@@ -37,3 +37,4 @@ export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
 export const baseProcedure = t.procedure;
 export const protectedProcedure = t.procedure.use(isAuthed);
+// TODO: implement usageProcedure, which in middleware checks for the consumed status
