@@ -9,15 +9,20 @@ updates:
   - package-ecosystem: "npm" # See documentation for possible values
     directory: "/" # Location of package manifests
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       day: "sunday"
       time: "16:00"
+    open-pull-requests-limit: 0
+    # only updates dependencies which are explicitly installed (not sub-dependencies)
+    allow:
+      - dependency-type: "direct"
 
   # enable version updates for Docker
   - package-ecosystem: "docker"
     # Look for a `Dockerfile` in the `root` directory
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       day: "sunday"
       time: "16:00"
+    open-pull-requests-limit: 0
