@@ -17,9 +17,9 @@ const Page = () => {
             height={60}
             className="hidden md:block mx-2.5"
           />
-          <h1 className="text-2xl md:text-5xl font-bold text-center">Cube</h1>
+          <h1 className="pl-2 text-2xl md:text-5xl font-bold text-center">Cube</h1>
         </div>
-        <p className="text-lg md:text-xl text-muted-foreground text-center">
+        <p className="text-md md:text-xl text-muted-foreground text-center">
           Create apps and websites by chatting with AI
         </p>
 

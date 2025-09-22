@@ -10,8 +10,8 @@ const Page = () => {
   return (
     <div className="flex flex-col max-w-3xl mx-auto w-full">
       <section className="space-y-6 pt-[16vh] 2xl:pt-48">
-        <h1 className="text-xl md:text-5xl font-bold text-center">Pricing</h1>
-        <p className="pb-8 text-muted-foreground text-center text-sm md:text-base">
+        <h1 className="text-4xl md:text-5xl font-bold text-center">Pricing</h1>
+        <p className="pb-8 text-muted-foreground text-center text-md md:text-base">
           Choose the plan that fits your needs
         </p>
       </section>
