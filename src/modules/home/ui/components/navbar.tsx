@@ -17,7 +17,7 @@ export const Navbar = () => {
     <nav
       className={cn(
         "p-4 bg-transparent fixed top-0 left-0 right-0 z-50 transition-all duration-200 border-b border-transparent",
-        isScrolled && "bg-background border-border",
+        isScrolled && "bg-background border-border"
       )}
     >
       <div className="max-w-5xl mx-auto w-full flex justify-between items-center">
@@ -26,22 +26,27 @@ export const Navbar = () => {
           <span className="font-semibold text-lg">Cube</span>
         </Link>
 
-        <SignedOut>
-          <div className="flex gap-2">
-            <SignUpButton>
-              <Button variant="outline" size="sm">
-                Sign up
-              </Button>
-            </SignUpButton>
-            <SignInButton>
-              <Button size="sm">Sign in</Button>
-            </SignInButton>
-          </div>
-        </SignedOut>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm">
+            <Link href="/pricing">Pricing</Link>
+          </Button>
+          <SignedOut>
+            <div className="flex gap-2">
+              <SignUpButton>
+                <Button variant="outline" size="sm">
+                  Sign up
+                </Button>
+              </SignUpButton>
+              <SignInButton>
+                <Button size="sm">Sign in</Button>
+              </SignInButton>
+            </div>
+          </SignedOut>
 
-        <SignedIn>
-          <UserControl showName />
-        </SignedIn>
+          <SignedIn>
+            <UserControl showName />
+          </SignedIn>
+        </div>
       </div>
     </nav>
   );
