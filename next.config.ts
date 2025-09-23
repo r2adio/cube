@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
+  // to allow cross-origin requests from localhost
+  allowedDevOrigins: ["local-origin.dev", "*.local-origin.dev"],
 };
 
 export default nextConfig;
