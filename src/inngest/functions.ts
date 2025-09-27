@@ -68,7 +68,7 @@ export const codeAgentFunc = inngest.createFunction(
       description: "An expert coding agent",
       system: PROMPT,
       model: gemini({
-        model: "gemini-2.0-flash",
+        model: "gemini-2.5-pro",
         // other defaultParameters of gemini-2.0-flash
         // Temperature, topP, topK, candidateCount
         // defaultParameters: { Temperature: 0.1 },
@@ -208,7 +208,7 @@ export const codeAgentFunc = inngest.createFunction(
       description: "A fragment title generator",
       system: FRAGMENT_TITLE_PROMPT,
       model: gemini({
-        model: "gemini-2.0-flash-lite",
+        model: "gemini-2.5-flash-lite",
       }),
     });
 
@@ -217,7 +217,7 @@ export const codeAgentFunc = inngest.createFunction(
       description: "A response generator",
       system: RESPONSE_PROMPT,
       model: gemini({
-        model: "gemini-2.0-flash-lite",
+        model: "gemini-2.5-flash-lite",
       }),
     });
 
