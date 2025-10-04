@@ -20,6 +20,19 @@ export const MessagesContainer = ({
   const trpc = useTRPC();
   const bottomRef = useRef<HTMLDivElement>(null);
   const lastAssistantMessageIdRef = useRef<string | null>(null);
+  const lastErrorMessageIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const lastMessage = messages.at(-1);
+    if (
+      lastMessage?.role === "ASSISTANT" &&
+      lastMessage?.type === "ERROR" &&
+      lastMessage.id !== lastErrorMessageIdRef.current
+    ) {
+      toast.error(lastMessage.content);
+      lastErrorMessageIdRef.current = lastMessage.id;
+    }
+  }, [messages]);
 
   const { data: messages } = useSuspenseQuery(
     trpc.messages.getMany.queryOptions(

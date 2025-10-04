@@ -28,7 +28,20 @@ interface AgentState {
 }
 
 export const codeAgentFunc = inngest.createFunction(
-  { id: "codeAgent" },
+  {
+    id: "codeAgent",
+    onFailure: async ({ error, event }) => {
+      console.error(`Code generation failed: ${error.message}`);
+      await prisma.message.create({
+        data: {
+          projectId: event.data.projectId,
+          content: "Something went wrong. Please try again.",
+          role: "ASSISTANT",
+          type: "ERROR",
+        },
+      });
+    },
+  },
   { event: "code-agent/run" },
   async ({ event, step }) => {
     const sandboxId = await step.run("get-sandbox-id", async () => {
