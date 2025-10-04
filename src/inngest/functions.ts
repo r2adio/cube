@@ -201,7 +201,10 @@ export const codeAgentFunc = inngest.createFunction(
     // const { output } = await codeAgent.run(
     //   `Write the following snippet: ${event.data.value}`,
     // );
-    const result = await network.run(event.data.value, { state });
+    const result = await network.run(
+      `<user_input>${event.data.value}</user_input>`,
+      { state },
+    );
 
     const fragmentTitleGenerator = createAgent({
       name: "fragment-title-generator",
