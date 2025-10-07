@@ -34,7 +34,7 @@ export const codeAgentFunc = inngest.createFunction(
       console.error(`Code generation failed: ${error.message}`);
       await prisma.message.create({
         data: {
-          projectId: event.data.projectId,
+          projectId: event.data.event.data.projectId,
           content: "Something went wrong. Please try again.",
           role: "ASSISTANT",
           type: "ERROR",

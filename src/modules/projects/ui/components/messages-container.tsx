@@ -5,6 +5,7 @@ import { MessageForm } from "./message-form";
 import { useEffect, useRef } from "react";
 import { Fragment } from "@/generated/prisma";
 import { MessageLoading } from "./message-loading";
+import { toast } from "sonner";
 
 interface Props {
   projectId: string;
@@ -22,29 +23,17 @@ export const MessagesContainer = ({
   const lastAssistantMessageIdRef = useRef<string | null>(null);
   const lastErrorMessageIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    const lastMessage = messages.at(-1);
-    if (
-      lastMessage?.role === "ASSISTANT" &&
-      lastMessage?.type === "ERROR" &&
-      lastMessage.id !== lastErrorMessageIdRef.current
-    ) {
-      toast.error(lastMessage.content);
-      lastErrorMessageIdRef.current = lastMessage.id;
-    }
-  }, [messages]);
-
   const { data: messages } = useSuspenseQuery(
     trpc.messages.getMany.queryOptions(
       { projectId: projectId },
-      { refetchInterval: 5000 }, // 5 seconds
-    ),
+      { refetchInterval: 5000 } // 5 seconds
+    )
   );
 
   // OPTIMIZE: now even after 5 seconds, selected fragment isn't changed
   useEffect(() => {
     const lastAssistantMessage = messages.findLast(
-      (message) => message.role === "ASSISTANT",
+      (message) => message.role === "ASSISTANT"
     );
 
     if (
@@ -56,6 +45,17 @@ export const MessagesContainer = ({
     }
   }, [messages, setActiveFragment]);
 
+  useEffect(() => {
+    const lastMessage = messages.at(-1);
+    if (
+      lastMessage?.role === "ASSISTANT" &&
+      lastMessage?.type === "ERROR" &&
+      lastMessage.id !== lastErrorMessageIdRef.current
+    ) {
+      toast.error(lastMessage.content);
+      lastErrorMessageIdRef.current = lastMessage.id;
+    }
+  }, [messages]);
   useEffect(() => {
     bottomRef.current?.scrollIntoView();
   }, [messages.length]);
